@@ -279,76 +279,30 @@ void Application::prepareTriangle_()
 
     // 頂点バッファの作成
     rect.initialize(gfx_device.get());
- //   Vertex vertices[] = {
- //   Vertex{ glm::vec2( -0.5f, -0.5f ), glm::vec3(1.0f,0.0f,0.0f), glm::vec2(1.0f, 0.0f) },
- //   Vertex{ glm::vec2(  0.5f, -0.5f ), glm::vec3(0.0f,1.0f,0.0f), glm::vec2(0.0f, 0.0f) },
- //   Vertex{ glm::vec2(  0.5f,  0.5f ), glm::vec3(0.0f,0.0f,1.0f), glm::vec2(0.0f, 1.0f) },
- //   Vertex{ glm::vec2( -0.5f,  0.5f),  glm::vec3(1.0f,1.0f,1.0f), glm::vec2(1.0f, 1.0f) },
- //   };
- //   const std::vector<uint16_t> indices = {
- //       0, 1, 2, 2, 3, 0
- //   };
- //   VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
-	//// テスト
- ////   int tex_width, tex_height, tex_channels;
-	////stbi_uc* pixels = stbi_load("C:/Users/user/Desktop/go/VulkanTemplate/texture/ENDFIELD_SHARE_1769687062.png", &tex_width, &tex_height, &tex_channels, STBI_rgb_alpha);
- ////   if (!pixels) {
- ////       throw std::runtime_error("failed to load texture image!");
- ////   }
- ////   VkDeviceSize image_size = tex_width * tex_height * 4;
- //   VkBufferCreateInfo buffer_create_info{
- //       .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
- //       .size = uint32_t(sizeof(bufferSize)),
- //       .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
- //   };
- //   vkCreateBuffer(device, &buffer_create_info, nullptr, &mVertexBuffer.buffer);
+    VkDescriptorSetLayoutBinding layout_binding{
+      .binding = 1,
+      .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+      .descriptorCount = 1,
+      .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+	  .pImmutableSamplers = nullptr,
+	};
 
- //   // メモリ要件を求める
- //   VkMemoryRequirements memory_requirements;
- //   vkGetBufferMemoryRequirements(device, mVertexBuffer.buffer, &memory_requirements);
- //   // メモリを確保する
- //   VkMemoryAllocateInfo memory_allocate_info{
- //       .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
- //       .allocationSize = memory_requirements.size,
- //       .memoryTypeIndex = gfx_device->getMemoryTypeIndex(memory_requirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
- //   };
- //   vkAllocateMemory(device, &memory_allocate_info, nullptr, &mVertexBuffer.memory);
- //   vkBindBufferMemory(device, mVertexBuffer.buffer, mVertexBuffer.memory, 0);
-
- //   // 頂点データを書き込む
- //   void* mapped;
- //   vkMapMemory(device, mVertexBuffer.memory, 0, bufferSize, 0, &mapped);
- //   memcpy(mapped, indices.data(), sizeof(bufferSize));
- //   vkUnmapMemory(device, mVertexBuffer.memory);
- //   buffer_create_info = {
- //       .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
- //       .size = uint32_t(sizeof(bufferSize)),
- //       .usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
- //   };
- //   vkCreateBuffer(device, &buffer_create_info, nullptr, &mVertexBuffer.buffer);
+    std::array<VkDescriptorSetLayoutBinding, 2> layout_bindings = { uboLayoutBinding, layout_binding };
 
     VkPipelineLayoutCreateInfo pipeline_layout_create_info{
       .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
     };
     vkCreatePipelineLayout(device, &pipeline_layout_create_info, nullptr, &mVkPipelineLayout);
 
-    VkVertexInputBindingDescription binding_desc{
-        .binding = 0,
-        .stride = uint32_t(sizeof(Rect::Vertex)),
-        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-    };
-    VkVertexInputAttributeDescription attribute_desc[] = {
-      {.location = 0, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = 0 },
-      {.location = 1, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = sizeof(glm::vec2) },
-      {.location = 2, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = sizeof(glm::vec2) + sizeof(glm::vec3) },
-    };
+	auto binding_description = Vertex::getBindingDescription();
+
     VkPipelineVertexInputStateCreateInfo vertex_input_create_info{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
         .vertexBindingDescriptionCount = 1,
-        .pVertexBindingDescriptions = &binding_desc,
-        .vertexAttributeDescriptionCount = 2,
-        .pVertexAttributeDescriptions = attribute_desc,
+        .pVertexBindingDescriptions = &binding_description,
+        .vertexAttributeDescriptionCount = 3,
+        .pVertexAttributeDescriptions = Vertex::getAttributeDescriptions().data(),
     };
 
     VkPipelineInputAssemblyStateCreateInfo input_assembly_state_create_info{
@@ -527,5 +481,30 @@ void Application::prepareRenderPass_()
         };
         vkCreateFramebuffer(device, &fbCI, nullptr, &mVkFramebuffers[i]);
     }
+}
+//---------------------------------------------------------------------------
+void Application::createDescriptorSetLayout_()
+{
+    auto& gfx_device = getGfxDevice();
+    auto device = gfx_device->getVkDevice();
+
+    VkDescriptorSetLayoutBinding ubo{
+      .binding = 0,
+      .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+      .descriptorCount = 1,
+      .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+	  .pImmutableSamplers = nullptr,
+    };
+
+    VkDescriptorSetLayoutCreateInfo layout_create_info{
+      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+      .bindingCount = 1,
+      .pBindings = &ubo,
+	};
+
+    if(vkCreateDescriptorSetLayout(device, &layout_create_info, nullptr, &mVkDescriptorSetLayout) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to create descriptor set layout!");
+	}
 }
 //---------------------------------------------------------------------------

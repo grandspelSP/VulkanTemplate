@@ -30,11 +30,20 @@ private:
 
     void prepareTriangle_();
     void prepareRenderPass_();
+	void createDescriptorSetLayout_();
 
     bool mIsInitialized = false;
 
     Rect rect;
 
+    struct UniformBufferObject
+    {
+        glm::mat4 model;
+        glm::mat4 view;
+        glm::mat4 proj;
+	};
+
+	VkDescriptorSetLayout mVkDescriptorSetLayout = VK_NULL_HANDLE;
     VkPipelineLayout mVkPipelineLayout = VK_NULL_HANDLE;
     VkPipeline mVkPipeline = VK_NULL_HANDLE;
 

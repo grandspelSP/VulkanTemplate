@@ -88,6 +88,9 @@ public:
 		}
 		return UINT32_MAX;
 	}
+	VkCommandPool getCommandPool() const {
+		return mCommandPool;
+	}
 
 	/*
 	 * 描画フレーム開始処理
