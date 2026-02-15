@@ -66,6 +66,8 @@ private:
 	void createTextureImageView_(GfxDevice* gfx_device);
 	void createTextureSampler_(GfxDevice* gfx_device);
 
+    void transitionImageLayout_(GfxDevice* gfx_device, VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+
 	VkCommandBuffer beginSingleTimeCommands_(GfxDevice* gfx_device);
 	void endSingleTimeCommands_(GfxDevice* gfx_device, VkCommandBuffer commandBuffer);
 
